@@ -37,20 +37,19 @@ unsafe fn new_connection_callback(new_conn :net_tcp::TcpNewConnection, _killch: 
                     Ok(bytes) => {
                         let request_str = str::from_bytes(bytes.slice(0, bytes.len() - 1));
                         println(fmt!("Request received:\n%s", request_str));
-			println(fmt!("Visitor count: %d\n", VISITOR_COUNT));
 			let begin = match request_str.find_str(" ") {Some(m)=>m, None=>-1};
-			let end = match request_str.slice_from(begin).find_str(" HTTP") {
-			    Some(m)=>m, None=>-1} + begin;
+			let end = match request_str.find_str(" HTTP") {Some(m)=>m, None=>-1};
                         let response: ~[u8] = match io::file_reader(&Path(request_str.slice(begin+2, end))) {
 			    result::Ok(file) => file.read_whole_stream(),
-			    result::Err(_) => (~"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n
+			    result::Err(_) => (~fmt!("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n
                              <doctype !html><html><head><title>Hello, Rust!</title>
                              <style>body { background-color: #111; color: #FFEEAA }
                                     h1 { font-size:2cm; text-align: center; color: black; text-shadow: 0 0 4mm red}
                              </style></head>
                              <body>
                              <h1>Greetings, Rusty!</h1>
-                             </body></html>\r\n").as_bytes_with_null_consume()
+			     <p>Visitor Count: %d</p>
+                             </body></html>\r\n", VISITOR_COUNT)).as_bytes_with_null_consume()
 			};
 
                         net_tcp::write(&sock, response);
